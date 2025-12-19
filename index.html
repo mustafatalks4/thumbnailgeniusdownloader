@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RedThumb - Ultimate Thumbnail Downloader</title>
+    <!-- Tailwind CSS for Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #dc2626; /* Red-600 */
+            border-radius: 4px;
+        }
+
+        /* Modal Animation */
+        .modal-animate {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Loader Spinner */
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #dc2626;
+            width: 20px;
+            height: 20px;
+            -webkit-animation: spin 1s linear infinite; /* Safari */
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- =========================
+         WHATSAPP POPUP MODAL
+    ========================== -->
+    <div id="wa-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-[90%] mx-auto text-center modal-animate relative">
+            
+            <div class="mb-6">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fab fa-whatsapp text-3xl text-green-600"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Access Required</h2>
+                <p class="text-gray-600 text-sm">To use this premium tool for free, please join our official WhatsApp update channel first.</p>
+            </div>
+
+            <!-- Action Button -->
+            <button id="join-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105 shadow-md flex items-center justify-center">
+                <span>Join WhatsApp Channel</span>
+            </button>
+            
+            <!-- Status Text Area -->
+            <div id="status-msg" class="mt-4 text-sm font-semibold h-6 text-red-600"></div>
+        </div>
+    </div>
+
+    <!-- =========================
+         MAIN APPLICATION CONTENT
+    ========================== -->
+    
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md border-b-2 border-red-600">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-play-circle text-red-600 text-2xl"></i>
+                <h1 class="text-xl font-bold tracking-tight text-gray-900">Red<span class="text-red-600">Thumb</span> Gen</h1>
+            </div>
+            <a href="#" class="text-sm font-semibold text-gray-600 hover:text-red-600 transition">Contact</a>
+        </div>
+    </nav>
+
+    <!-- Hero / Input Section -->
+    <section class="bg-gradient-to-br from-red-600 to-red-800 text-white py-16 px-4">
+        <div class="container mx-auto max-w-3xl text-center">
+            <h2 class="text-3xl md:text-5xl font-bold mb-6">YouTube Thumbnail Downloader</h2>
+            <p class="text-red-100 mb-8 text-lg">Download high-quality thumbnails from any YouTube video instantly.</p>
+            
+            <div class="bg-white p-2 rounded-lg shadow-lg flex flex-col md:flex-row gap-2">
+                <input type="text" id="video-url" placeholder="Paste YouTube Link Here (e.g., https://youtu.be/...)" 
+                    class="flex-1 p-4 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-red-500 border-none">
+                <button onclick="getThumbnail()" class="bg-gray-900 hover:bg-black text-white px-8 py-4 rounded-md font-bold transition shadow-lg flex items-center justify-center gap-2">
+                    <i class="fas fa-search"></i> Get Thumbnails
+                </button>
+            </div>
+            <p id="error-msg" class="text-yellow-300 mt-3 hidden font-semibold text-sm"></p>
+        </div>
+    </section>
+
+    <!-- Results Section (Hidden by default) -->
+    <main id="results-area" class="container mx-auto px-4 py-12 hidden">
+        <div class="flex items-center justify-center mb-10">
+            <h3 class="text-2xl font-bold text-gray-800 border-b-4 border-red-600 pb-2">Available Qualities</h3>
+        </div>
+
+        <!-- Grid for Thumbnails -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            
+            <!-- Card 1: Max Res -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition duration-300 border border-gray-100">
+                <div class="relative group">
+                    <img id="thumb-max" src="" alt="Max Resolution" class="w-full h-48 object-cover">
+                    <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                        <span class="text-white font-bold">1280 x 720</span>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <h4 class="font-bold text-lg mb-1 text-gray-800">HD (1080p)</h4>
+                    <p class="text-xs text-gray-500 mb-4">Best for large screens</p>
+                    <button onclick="downloadImage('thumb-max')" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded font-semibold transition">
+                        <i class="fas fa-download mr-2"></i> Download
+                    </button>
+                </div>
+            </div>
+
+            <!-- Card 2: High Res -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition duration-300 border border-gray-100">
+                <div class="relative group">
+                    <img id="thumb-high" src="" alt="High Resolution" class="w-full h-48 object-cover">
+                    <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                        <span class="text-white font-bold">640 x 480</span>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <h4 class="font-bold text-lg mb-1 text-gray-800">High (480p)</h4>
+                    <p class="text-xs text-gray-500 mb-4">Great for blog posts</p>
+                    <button onclick="downloadImage('thumb-high')" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded font-semibold transition">
+                        <i class="fas fa-download mr-2"></i> Download
+                    </button>
+                </div>
+            </div>
+
+            <!-- Card 3: Medium Res -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition duration-300 border border-gray-100">
+                <div class="relative group">
+                    <img id="thumb-med" src="" alt="Medium Resolution" class="w-full h-48 object-cover">
+                    <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                        <span class="text-white font-bold">320 x 180</span>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <h4 class="font-bold text-lg mb-1 text-gray-800">Medium (360p)</h4>
+                    <p class="text-xs text-gray-500 mb-4">Good for comments/previews</p>
+                    <button onclick="downloadImage('thumb-med')" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded font-semibold transition">
+                        <i class="fas fa-download mr-2"></i> Download
+                    </button>
+                </div>
+            </div>
+
+            <!-- Card 4: Standard Res -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition duration-300 border border-gray-100">
+                <div class="relative group">
+                    <img id="thumb-std" src="" alt="Standard Resolution" class="w-full h-48 object-cover">
+                    <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                        <span class="text-white font-bold">120 x 90</span>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <h4 class="font-bold text-lg mb-1 text-gray-800">Standard (Default)</h4>
+                    <p class="text-xs text-gray-500 mb-4">Smallest file size</p>
+                    <button onclick="downloadImage('thumb-std')" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded font-semibold transition">
+                        <i class="fas fa-download mr-2"></i> Download
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- FAQ Section -->
+    <section class="bg-white py-12 border-t border-gray-200">
+        <div class="container mx-auto px-4 max-w-4xl">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-10">Frequently Asked Questions</h2>
+            
+            <div class="space-y-4">
+                <div class="border rounded-lg p-5 hover:bg-red-50 transition cursor-pointer">
+                    <h3 class="font-bold text-red-600 mb-2">Are these thumbnails free to download?</h3>
+                    <p class="text-gray-600">Yes, our tool is 100% free to use for unlimited downloads.</p>
+                </div>
+
+                <div class="border rounded-lg p-5 hover:bg-red-50 transition cursor-pointer">
+                    <h3 class="font-bold text-red-600 mb-2">Does this work on Mobile?</h3>
+                    <p class="text-gray-600">Absolutely! RedThumb Gen is fully responsive and works on iPhone, Android, Tablet, and Desktop.</p>
+                </div>
+
+                <div class="border rounded-lg p-5 hover:bg-red-50 transition cursor-pointer">
+                    <h3 class="font-bold text-red-600 mb-2">Why isn't the HD thumbnail showing?</h3>
+                    <p class="text-gray-600">Some older videos or low-quality uploads on YouTube do not have a High Definition (1080p) thumbnail generated. In that case, we display a fallback image.</p>
+                </div>
+
+                <div class="border rounded-lg p-5 hover:bg-red-50 transition cursor-pointer">
+                    <h3 class="font-bold text-red-600 mb-2">Is it legal to download thumbnails?</h3>
+                    <p class="text-gray-600">Yes, it is legal to download them for fair use, reference, or inspiration. However, do not use copyrighted images as your own without permission.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-8 text-center">
+        <p>&copy; 2024 RedThumb Generator. All rights reserved.</p>
+    </footer>
+
+    <!-- =========================
+         JAVASCRIPT LOGIC
+    ========================== -->
+    <script>
+        // *** CONFIGURATION ***
+        // REPLACE THIS URL WITH YOUR ACTUAL WHATSAPP CHANNEL LINK
+        const WHATSAPP_CHANNEL_URL = "https://whatsapp.com/channel/YOUR_LINK_HERE"; 
+
+        // DOM Elements
+        const modal = document.getElementById('wa-modal');
+        const joinBtn = document.getElementById('join-btn');
+        const statusMsg = document.getElementById('status-msg');
+        const videoInput = document.getElementById('video-url');
+        const resultsArea = document.getElementById('results-area');
+        const errorMsg = document.getElementById('error-msg');
+
+        // --- 1. POPUP LOGIC ---
+        
+        joinBtn.addEventListener('click', () => {
+            // 1. Change button state to processing
+            joinBtn.disabled = true;
+            joinBtn.innerHTML = '<div class="loader"></div> WhatsApp channel processing...';
+            joinBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+            joinBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+
+            // 2. Simulate processing delay (1.5 seconds)
+            setTimeout(() => {
+                // 3. Open WhatsApp Link
+                window.open(WHATSAPP_CHANNEL_URL, '_blank');
+
+                // 4. Update UI to "Thanks"
+                joinBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Verified';
+                joinBtn.classList.remove('bg-gray-400');
+                joinBtn.classList.add('bg-blue-600', 'text-white');
+                
+                // Show thanks popup message inside the modal before closing
+                statusMsg.innerHTML = '<span class="text-green-600 text-lg">Thanks for joining!</span>';
+                statusMsg.classList.add('animate-bounce');
+
+                // 5. Close Modal after short delay so they see the "Thanks"
+                setTimeout(() => {
+                    modal.style.opacity = '0';
+                    modal.style.transition = 'opacity 0.5s ease';
+                    setTimeout(() => {
+                        modal.style.display = 'none';
+                    }, 500); // Wait for fade out
+                }, 2000);
+
+            }, 1500);
+        });
+
+
+        // --- 2. THUMBNAIL GENERATOR LOGIC ---
+
+        function getThumbnail() {
+            const url = videoInput.value.trim();
+            errorMsg.classList.add('hidden');
+            resultsArea.classList.add('hidden');
+
+            if (!url) {
+                showError("Please paste a valid YouTube URL.");
+                return;
+            }
+
+            const videoId = extractVideoId(url);
+
+            if (!videoId) {
+                showError("Invalid YouTube URL. Please try again.");
+                return;
+            }
+
+            // Set Image Sources
+            document.getElementById('thumb-max').src = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+            document.getElementById('thumb-high').src = `https://img.youtube.com/vi/${videoId}/sddefault.jpg`;
+            document.getElementById('thumb-med').src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+            document.getElementById('thumb-std').src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+
+            // Handle fallback for maxres (some videos don't have it)
+            document.getElementById('thumb-max').onerror = function() {
+                this.src = `https://img.youtube.com/vi/${videoId}/sddefault.jpg`; // Fallback to SD
+            };
+
+            // Show Results
+            resultsArea.classList.remove('hidden');
+            
+            // Smooth scroll to results
+            resultsArea.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function extractVideoId(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
+        function showError(msg) {
+            errorMsg.innerText = msg;
+            errorMsg.classList.remove('hidden');
+        }
+
+        // --- 3. DOWNLOAD LOGIC ---
+        // Note: Direct download often blocked by browser CORS for YT images. 
+        // We open in new tab as a fallback or use the clipboard method.
+        async function downloadImage(imgId) {
+            const img = document.getElementById(imgId);
+            const imageURL = img.src;
+
+            // Attempt to fetch blob for download
+            try {
+                const response = await fetch(imageURL);
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = 'thumbnail.jpg';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (error) {
+                // CORS Fallback: Open in new tab
+                window.open(imageURL, '_blank');
+            }
+        }
+    </script>
+</body>
+</html>
